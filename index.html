@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Card Sort — Notification Preferences</title>
+<title>Card Sort — Benachrichtigungen</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,6 +14,30 @@
     min-height: 100vh;
   }
 
+  /* ---- Language Switcher ---- */
+  .lang-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 40px 0;
+    gap: 4px;
+  }
+  .lang-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid #E2E4E9;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #6B7280;
+    transition: all 0.15s;
+  }
+  .lang-btn.active {
+    background: #4F46E5;
+    color: #fff;
+    border-color: #4F46E5;
+  }
+
   /* ---- Screens ---- */
   .screen { display: none; }
   .screen.active { display: block; }
@@ -21,7 +45,7 @@
   /* ---- Welcome Screen ---- */
   .welcome {
     max-width: 560px;
-    margin: 80px auto;
+    margin: 40px auto 80px;
     background: #fff;
     border-radius: 16px;
     padding: 48px 40px;
@@ -191,12 +215,15 @@
   }
 
   /* ---- Categories (right) ---- */
-  .categories {
+  .categories-wrapper {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
     min-width: 0;
+  }
+  .categories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
   }
 
   .category {
@@ -252,6 +279,7 @@
 
   /* ---- Add Category ---- */
   .add-category-btn {
+    grid-column: 1 / -1;
     border: 2px dashed #D1D5DB;
     border-radius: 14px;
     padding: 20px;
@@ -390,11 +418,11 @@
   /* ---- Done State ---- */
   .done-banner {
     display: none;
+    grid-column: 1 / -1;
     background: #ECFDF5;
     border: 1px solid #A7F3D0;
     border-radius: 12px;
     padding: 20px 24px;
-    margin-bottom: 20px;
     font-size: 14px;
     color: #065F46;
     line-height: 1.5;
@@ -432,18 +460,20 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ============================================================
-     RESPONSIVE — fluid scaling
+     RESPONSIVE
      ============================================================ */
   @media (max-width: 1024px) {
     .header { padding: 20px 24px; }
     .layout { padding: 24px 24px 100px; gap: 24px; }
     .card-pool { width: 240px; }
     .submit-bar { padding: 16px 24px; }
+    .lang-bar { padding: 12px 24px 0; }
   }
 
   @media (max-width: 768px) {
-    .welcome { margin: 40px 16px; padding: 32px 24px; }
+    .welcome { margin: 20px 16px 60px; padding: 32px 24px; }
     .welcome h1 { font-size: 20px; }
+    .lang-bar { padding: 10px 16px 0; }
 
     .header { padding: 16px 16px; }
     .header h1 { font-size: 17px; }
@@ -458,6 +488,9 @@
       width: 100%;
       position: relative;
       top: auto;
+    }
+    .categories {
+      grid-template-columns: 1fr;
     }
     .card { padding: 12px 14px; font-size: 13px; }
 
@@ -474,50 +507,57 @@
 </head>
 <body>
 
+<!-- Language Switcher -->
+<div class="lang-bar" id="langBar">
+  <button class="lang-btn active" data-lang="de">DE</button>
+  <button class="lang-btn" data-lang="en">EN</button>
+</div>
+
 <!-- ==================== SCREEN 1: Welcome ==================== -->
 <div class="screen active" id="screenWelcome">
   <div class="welcome">
-    <h1>Help us improve notification settings</h1>
-    <p>You'll see a list of email notifications. Sort them into the groups that make the most sense to you. There are no right or wrong answers — we're interested in how <strong>you</strong> think about these.</p>
-    <label for="participantName">Your name or initials</label>
-    <input type="text" id="participantName" placeholder="e.g. Sarah C." autocomplete="off">
-    <button class="btn-start" id="btnStart" disabled>Start sorting</button>
-    <div class="time-note">Takes about 5 minutes</div>
+    <h1 data-i18n="welcome_title"></h1>
+    <p data-i18n="welcome_desc"></p>
+    <label for="participantName" data-i18n="welcome_label"></label>
+    <input type="text" id="participantName" autocomplete="off">
+    <button class="btn-start" id="btnStart" disabled data-i18n="welcome_btn"></button>
+    <div class="time-note" data-i18n="welcome_time"></div>
   </div>
 </div>
 
 <!-- ==================== SCREEN 2: Card Sort ==================== -->
 <div class="screen" id="screenSort">
   <div class="header">
-    <h1>Sort these email notifications into groups</h1>
-    <p>Drag each card into the category where you'd expect to find it. You can also create your own category if none fit.</p>
+    <h1 data-i18n="sort_title"></h1>
+    <p data-i18n="sort_desc"></p>
     <div class="progress-bar">
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-      <span class="progress-label" id="progressLabel">0 / 15 sorted</span>
+      <span class="progress-label" id="progressLabel"></span>
     </div>
   </div>
 
   <div class="layout">
     <div class="card-pool">
-      <div class="card-pool-header">Cards to sort</div>
+      <div class="card-pool-header" data-i18n="pool_header"></div>
       <div class="card-pool-list" id="cardPool"></div>
       <div class="pool-empty" id="poolEmpty">
         <span class="check-icon">&#10003;</span>
-        All cards sorted!<br>Review your groups or drag cards between categories.
+        <span data-i18n="pool_empty"></span>
       </div>
     </div>
 
-    <div class="categories" id="categories">
-      <div class="done-banner" id="doneBanner">
-        <strong>All cards sorted!</strong> Review your groups. You can still move cards around or add new categories before submitting.
+    <div class="categories-wrapper">
+      <div class="card-pool-header" data-i18n="categories_header"></div>
+      <div class="categories" id="categories">
+        <div class="done-banner" id="doneBanner" data-i18n="done_banner"></div>
+        <div class="add-category-btn" id="addCategoryBtn" data-i18n="add_category"></div>
       </div>
-      <div class="add-category-btn" id="addCategoryBtn">+ Create your own category</div>
     </div>
   </div>
 
   <div class="submit-bar" id="submitBar">
-    <p>All cards sorted — ready to submit?</p>
-    <button class="btn-submit" id="btnSubmitFinal">Submit my sorting</button>
+    <p data-i18n="submit_text"></p>
+    <button class="btn-submit" id="btnSubmitFinal" data-i18n="submit_btn"></button>
   </div>
 </div>
 
@@ -525,19 +565,19 @@
 <div class="screen" id="screenThanks">
   <div class="thankyou">
     <div class="check-circle">&#10003;</div>
-    <h1>Thank you!</h1>
-    <p>Your responses will directly shape how we design notification settings. We really appreciate your time.</p>
+    <h1 data-i18n="thanks_title"></h1>
+    <p data-i18n="thanks_desc"></p>
   </div>
 </div>
 
 <!-- ==================== Modal: New Category ==================== -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h2>New category</h2>
-    <input type="text" id="newCategoryInput" placeholder="e.g. Getting started, Job matching...">
+    <h2 data-i18n="modal_title"></h2>
+    <input type="text" id="newCategoryInput">
     <div class="modal-actions">
-      <button class="btn-cancel" id="modalCancel">Cancel</button>
-      <button class="btn-primary" id="modalCreate">Create</button>
+      <button class="btn-cancel" id="modalCancel" data-i18n="modal_cancel"></button>
+      <button class="btn-primary" id="modalCreate" data-i18n="modal_create"></button>
     </div>
   </div>
 </div>
@@ -549,37 +589,208 @@
   const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyRgNAWwqNTASpDKEDnj6ZHr6KtmdZJIOBJB-5fqvZxAAvTngK-RgP_p5sCf2OSmb4MMQ/exec';
 
   // ==================================================================
-  // DATA
+  // TRANSLATIONS
   // ==================================================================
-  const cards = [
-    'Recommended jobs based on your profile',
-    'New jobs matching your saved search',
-    'Reminder to finish your application',
-    'Your application was viewed',
-    'Application status update',
-    'Interview preparation tips',
-    'Job market insights for your field',
-    'Tips to improve your job search',
-    'Complete your profile reminder',
-    'Confirm your profile information',
-    'Welcome to HeyJobs',
-    'Company updates from HeyJobs',
-    'New features on HeyJobs',
-    'Salary insights for roles you\'ve viewed',
-    'Reminder: you haven\'t searched in a while',
-  ];
+  const i18n = {
+    de: {
+      // Welcome
+      welcome_title: 'Hilf uns, die Benachrichtigungen zu verbessern',
+      welcome_desc: 'Du siehst eine Liste von E-Mail-Benachrichtigungen. Sortiere sie in die Gruppen, die f\u00fcr dich am meisten Sinn ergeben. Es gibt keine richtigen oder falschen Antworten \u2014 uns interessiert, wie <strong>du</strong> dar\u00fcber denkst.',
+      welcome_label: 'Dein Name oder Initialen',
+      welcome_placeholder: 'z.B. Sarah C.',
+      welcome_btn: 'Sortierung starten',
+      welcome_time: 'Dauert ca. 5 Minuten',
+      // Sort screen
+      sort_title: 'Sortiere diese E-Mail-Benachrichtigungen in Gruppen',
+      sort_desc: 'Ziehe jede Karte in die Kategorie, in der du sie erwarten w\u00fcrdest. Du kannst auch eine eigene Kategorie erstellen.',
+      pool_header: 'Karten zum Sortieren',
+      categories_header: 'Kategorien',
+      pool_empty: 'Alle Karten sortiert!<br>Pr\u00fcfe deine Gruppen oder verschiebe Karten zwischen Kategorien.',
+      done_banner: '<strong>Alle Karten sortiert!</strong> Pr\u00fcfe deine Gruppen. Du kannst Karten noch verschieben oder neue Kategorien hinzuf\u00fcgen.',
+      add_category: '+ Eigene Kategorie erstellen',
+      placeholder: 'Karten hierher ziehen',
+      progress: '{n} / {total} sortiert',
+      // Submit
+      submit_text: 'Alle Karten sortiert \u2014 bereit zum Absenden?',
+      submit_btn: 'Sortierung absenden',
+      // Thanks
+      thanks_title: 'Vielen Dank!',
+      thanks_desc: 'Deine Antworten helfen uns direkt bei der Gestaltung der Benachrichtigungseinstellungen. Wir sch\u00e4tzen deine Zeit sehr.',
+      // Modal
+      modal_title: 'Neue Kategorie',
+      modal_placeholder: 'z.B. Erste Schritte, Job-Matching...',
+      modal_cancel: 'Abbrechen',
+      modal_create: 'Erstellen',
+      // Cards
+      cards: [
+        'Empfohlene Jobs basierend auf deinem Profil',
+        'Neue Jobs passend zu deiner gespeicherten Suche',
+        'Erinnerung: Bewerbung abschlie\u00dfen',
+        'Deine Bewerbung wurde angesehen',
+        'Bewerbungsstatus-Update',
+        'Tipps zur Interviewvorbereitung',
+        'Arbeitsmarkt-Einblicke f\u00fcr dein Berufsfeld',
+        'Tipps zur Verbesserung deiner Jobsuche',
+        'Erinnerung: Profil vervollst\u00e4ndigen',
+        'Profilinformationen best\u00e4tigen',
+        'Willkommen bei HeyJobs',
+        'Neuigkeiten von HeyJobs',
+        'Neue Funktionen auf HeyJobs',
+        'Gehaltseinblicke f\u00fcr angesehene Stellen',
+        'Erinnerung: Du hast eine Weile nicht gesucht',
+      ],
+      // Categories
+      categories: [
+        'Jobempfehlungen',
+        'Job-Benachrichtigungen',
+        'Jobsuche- & Bewerbungserinnerungen',
+        'Tipps & Chancen zur Jobsuche',
+        'Unternehmensneuigkeiten',
+      ],
+    },
+    en: {
+      welcome_title: 'Help us improve notification settings',
+      welcome_desc: 'You\'ll see a list of email notifications. Sort them into the groups that make the most sense to you. There are no right or wrong answers \u2014 we\'re interested in how <strong>you</strong> think about these.',
+      welcome_label: 'Your name or initials',
+      welcome_placeholder: 'e.g. Sarah C.',
+      welcome_btn: 'Start sorting',
+      welcome_time: 'Takes about 5 minutes',
+      sort_title: 'Sort these email notifications into groups',
+      sort_desc: 'Drag each card into the category where you\'d expect to find it. You can also create your own category if none fit.',
+      pool_header: 'Cards to sort',
+      categories_header: 'Categories',
+      pool_empty: 'All cards sorted!<br>Review your groups or drag cards between categories.',
+      done_banner: '<strong>All cards sorted!</strong> Review your groups. You can still move cards around or add new categories before submitting.',
+      add_category: '+ Create your own category',
+      placeholder: 'Drag cards here',
+      progress: '{n} / {total} sorted',
+      submit_text: 'All cards sorted \u2014 ready to submit?',
+      submit_btn: 'Submit my sorting',
+      thanks_title: 'Thank you!',
+      thanks_desc: 'Your responses will directly shape how we design notification settings. We really appreciate your time.',
+      modal_title: 'New category',
+      modal_placeholder: 'e.g. Getting started, Job matching...',
+      modal_cancel: 'Cancel',
+      modal_create: 'Create',
+      cards: [
+        'Recommended jobs based on your profile',
+        'New jobs matching your saved search',
+        'Reminder to finish your application',
+        'Your application was viewed',
+        'Application status update',
+        'Interview preparation tips',
+        'Job market insights for your field',
+        'Tips to improve your job search',
+        'Complete your profile reminder',
+        'Confirm your profile information',
+        'Welcome to HeyJobs',
+        'Company updates from HeyJobs',
+        'New features on HeyJobs',
+        'Salary insights for roles you\'ve viewed',
+        'Reminder: you haven\'t searched in a while',
+      ],
+      categories: [
+        'Job recommendations',
+        'Job Alerts',
+        'Job search & application reminders',
+        'Job search tips & opportunities',
+        'Company updates',
+      ],
+    }
+  };
 
-  const defaultCategories = [
-    'Job recommendations',
-    'Job Alerts',
-    'Job search & application reminders',
-    'Job search tips & opportunities',
-    'Company updates',
-  ];
+  // English card labels are always used as IDs for Google Sheets
+  const cardIds = i18n.en.cards;
 
-  const totalCards = cards.length;
+  let lang = 'de';
+  const totalCards = cardIds.length;
   const sessionId = 'S' + Date.now().toString(36);
   let participantName = '';
+  let sortInitialized = false;
+
+  // ==================================================================
+  // i18n RENDERING
+  // ==================================================================
+  function t(key) { return i18n[lang][key] || key; }
+
+  function applyLanguage() {
+    document.documentElement.lang = lang;
+    document.title = lang === 'de' ? 'Card Sort \u2014 Benachrichtigungen' : 'Card Sort \u2014 Notification Preferences';
+
+    // Update all static text
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      const val = t(key);
+      if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+        if (el.tagName === 'BUTTON') el.innerHTML = val;
+      } else {
+        el.innerHTML = val;
+      }
+    });
+
+    // Placeholders
+    document.getElementById('participantName').placeholder = t('welcome_placeholder');
+    document.getElementById('newCategoryInput').placeholder = t('modal_placeholder');
+
+    // Update progress label
+    updateProgressLabel();
+
+    // Update lang buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+  }
+
+  function updateProgressLabel() {
+    const drops = document.querySelectorAll('.category-drop');
+    let sorted = 0;
+    drops.forEach(drop => { sorted += drop.querySelectorAll('.card').length; });
+    const label = t('progress').replace('{n}', sorted).replace('{total}', totalCards);
+    document.getElementById('progressLabel').textContent = label;
+  }
+
+  // ==================================================================
+  // LANGUAGE SWITCHER
+  // ==================================================================
+  document.getElementById('langBar').addEventListener('click', (e) => {
+    const btn = e.target.closest('.lang-btn');
+    if (!btn || btn.dataset.lang === lang) return;
+    lang = btn.dataset.lang;
+    applyLanguage();
+
+    // Update cards and categories if sort not started yet
+    if (!sortInitialized) return;
+
+    // Update card text
+    document.querySelectorAll('.card').forEach(card => {
+      const idx = cardIds.indexOf(card.dataset.label);
+      if (idx !== -1) {
+        card.innerHTML = `<span class="drag-handle">&#8942;&#8942;</span>${i18n[lang].cards[idx]}`;
+      }
+    });
+
+    // Update category names
+    const catDrops = document.querySelectorAll('.category-drop');
+    catDrops.forEach(drop => {
+      const currentCat = drop.dataset.category;
+      // Check if it's a default category (match by English name)
+      const enIdx = i18n.en.categories.indexOf(currentCat);
+      const deIdx = i18n.de.categories.indexOf(currentCat);
+      const idx = enIdx !== -1 ? enIdx : deIdx;
+      if (idx !== -1) {
+        const newName = i18n[lang].categories[idx];
+        drop.dataset.category = newName;
+        const titleEl = drop.closest('.category').querySelector('.category-title');
+        const count = titleEl.querySelector('.category-count').outerHTML;
+        titleEl.innerHTML = newName + ' ' + count;
+      }
+    });
+
+    // Update placeholders in empty drops
+    document.querySelectorAll('.category-drop .placeholder').forEach(ph => {
+      ph.textContent = t('placeholder');
+    });
+  });
 
   // ==================================================================
   // SCREEN MANAGEMENT
@@ -588,6 +799,8 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0, 0);
+    // Hide lang switcher after welcome
+    document.getElementById('langBar').style.display = id === 'screenWelcome' ? 'flex' : 'none';
   }
 
   // ==================================================================
@@ -603,7 +816,7 @@
   btnStart.addEventListener('click', () => {
     participantName = nameInput.value.trim();
     showScreen('screenSort');
-    initCardSort();
+    if (!sortInitialized) initCardSort();
   });
 
   nameInput.addEventListener('keydown', (e) => {
@@ -616,7 +829,6 @@
   const cardPool = document.getElementById('cardPool');
   const categoriesEl = document.getElementById('categories');
   const progressFill = document.getElementById('progressFill');
-  const progressLabel = document.getElementById('progressLabel');
   const poolEmpty = document.getElementById('poolEmpty');
   const doneBanner = document.getElementById('doneBanner');
   const addCategoryBtn = document.getElementById('addCategoryBtn');
@@ -631,16 +843,16 @@
     return a;
   }
 
-  function createCardEl(text) {
+  function createCardEl(enLabel, displayText) {
     const card = document.createElement('div');
     card.className = 'card';
     card.draggable = true;
-    card.dataset.label = text;
-    card.innerHTML = `<span class="drag-handle">&#8942;&#8942;</span>${text}`;
+    card.dataset.label = enLabel; // Always store English for Sheets
+    card.innerHTML = `<span class="drag-handle">&#8942;&#8942;</span>${displayText}`;
 
     card.addEventListener('dragstart', (e) => {
       card.classList.add('dragging');
-      e.dataTransfer.setData('text/plain', text);
+      e.dataTransfer.setData('text/plain', enLabel);
       e.dataTransfer.effectAllowed = 'move';
     });
     card.addEventListener('dragend', () => {
@@ -658,7 +870,7 @@
         <span class="category-title">${name} <span class="category-count">0</span></span>
       </div>
       <div class="category-drop" data-category="${name}">
-        <span class="placeholder">Drag cards here</span>
+        <span class="placeholder">${t('placeholder')}</span>
       </div>
     `;
 
@@ -715,7 +927,7 @@
       if (count === 0 && !ph) {
         ph = document.createElement('span');
         ph.className = 'placeholder';
-        ph.textContent = 'Drag cards here';
+        ph.textContent = t('placeholder');
         drop.appendChild(ph);
       } else if (count > 0 && ph) {
         ph.remove();
@@ -726,7 +938,7 @@
 
     const pct = Math.round((sorted / totalCards) * 100);
     progressFill.style.width = pct + '%';
-    progressLabel.textContent = `${sorted} / ${totalCards} sorted`;
+    updateProgressLabel();
 
     const poolCards = cardPool.querySelectorAll('.card').length;
     poolEmpty.style.display = poolCards === 0 ? 'block' : 'none';
@@ -737,10 +949,12 @@
   }
 
   function initCardSort() {
-    shuffle(cards).forEach(text => {
-      cardPool.appendChild(createCardEl(text));
+    const shuffled = shuffle(cardIds.map((enLabel, i) => ({ en: enLabel, display: i18n[lang].cards[i] })));
+    shuffled.forEach(({ en, display }) => {
+      cardPool.appendChild(createCardEl(en, display));
     });
-    defaultCategories.forEach(name => createCategory(name));
+    i18n[lang].categories.forEach(name => createCategory(name));
+    sortInitialized = true;
   }
 
   // ==================================================================
@@ -782,14 +996,14 @@
   document.getElementById('btnSubmitFinal').addEventListener('click', async () => {
     const btn = document.getElementById('btnSubmitFinal');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Submitting...';
+    btn.innerHTML = '<span class="spinner"></span>' + (lang === 'de' ? 'Wird gesendet...' : 'Submitting...');
 
     const responses = [];
     document.querySelectorAll('.category-drop').forEach(drop => {
       const category = drop.dataset.category;
       drop.querySelectorAll('.card').forEach(card => {
         responses.push({
-          card: card.dataset.label,
+          card: card.dataset.label,  // Always English
           category: category
         });
       });
@@ -798,6 +1012,7 @@
     const payload = {
       participant: participantName,
       sessionId: sessionId,
+      language: lang,
       responses: responses
     };
 
@@ -814,6 +1029,11 @@
 
     showScreen('screenThanks');
   });
+
+  // ==================================================================
+  // INIT
+  // ==================================================================
+  applyLanguage();
 </script>
 
 </body>
