@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Sort — Notification Preferences</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F5F6F8;
+    color: #1A1D23;
+    min-height: 100vh;
+  }
+
+  /* ---- Screens ---- */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ---- Welcome Screen ---- */
+  .welcome {
+    max-width: 560px;
+    margin: 80px auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 48px 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+  .welcome h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .welcome p {
+    font-size: 15px;
+    color: #6B7280;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+  .welcome label {
+    display: block;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+  .welcome input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #D1D5DB;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 24px;
+  }
+  .welcome input:focus { border-color: #818CF8; }
+  .welcome .btn-start {
+    background: #4F46E5;
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  .welcome .btn-start:hover { background: #4338CA; }
+  .welcome .btn-start:disabled {
+    background: #C7D2FE;
+    cursor: not-allowed;
+  }
+  .welcome .time-note {
+    font-size: 13px;
+    color: #9CA3AF;
+    margin-top: 16px;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #E2E4E9;
+    padding: 24px 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .header p {
+    font-size: 14px;
+    color: #6B7280;
+    max-width: 640px;
+    line-height: 1.5;
+  }
+  .progress-bar {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: #E2E4E9;
+    border-radius: 3px;
+    max-width: 320px;
+  }
+  .progress-fill {
+    height: 6px;
+    background: #2563EB;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    font-size: 13px;
+    color: #6B7280;
+    min-width: 80px;
+  }
+
+  /* ---- Layout ---- */
+  .layout {
+    display: flex;
+    gap: 32px;
+    padding: 32px 40px 100px;
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: flex-start;
+  }
+
+  /* ---- Card Pool (left) ---- */
+  .card-pool {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 120px;
+  }
+  .card-pool-header {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6B7280;
+    margin-bottom: 12px;
+  }
+  .card-pool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+  }
+
+  /* ---- Draggable Card ---- */
+  .card {
+    background: #fff;
+    border: 1px solid #E2E4E9;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.35;
+  }
+  .card:hover {
+    border-color: #C7D2FE;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  }
+  .card.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  .card .drag-handle {
+    color: #C5C9D2;
+    flex-shrink: 0;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* ---- Categories (right) ---- */
+  .categories {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  .category {
+    background: #fff;
+    border: 1px solid #E2E4E9;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .category-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #F0F1F3;
+  }
+  .category-title {
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .category-count {
+    background: #EEF2FF;
+    color: #4F46E5;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .category-drop {
+    min-height: 64px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .category-drop.drag-over {
+    background: #F5F7FF;
+  }
+  .category-drop .placeholder {
+    color: #9CA3AF;
+    font-size: 13px;
+    text-align: center;
+    padding: 16px 0;
+    pointer-events: none;
+  }
+  .category-drop .card {
+    border-color: #C7D2FE;
+    background: #FAFAFF;
+  }
+
+  /* ---- Add Category ---- */
+  .add-category-btn {
+    border: 2px dashed #D1D5DB;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    color: #6B7280;
+    font-size: 14px;
+    font-weight: 500;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-category-btn:hover {
+    border-color: #818CF8;
+    color: #4F46E5;
+  }
+
+  /* ---- Submit bar ---- */
+  .submit-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid #E2E4E9;
+    padding: 16px 40px;
+    z-index: 100;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+  }
+  .submit-bar.visible { display: flex; }
+  .submit-bar p {
+    font-size: 14px;
+    color: #065F46;
+    font-weight: 500;
+  }
+  .submit-bar .btn-submit {
+    background: #059669;
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .submit-bar .btn-submit:hover { background: #047857; }
+
+  /* ---- Modal ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    width: 440px;
+    max-width: 90vw;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.16);
+  }
+  .modal h2 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .modal input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+  }
+  .modal input:focus { border-color: #818CF8; }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .modal-actions button {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-cancel { background: #F3F4F6; color: #374151; }
+  .btn-cancel:hover { background: #E5E7EB; }
+  .btn-primary { background: #4F46E5; color: #fff; }
+  .btn-primary:hover { background: #4338CA; }
+
+  /* ---- Thank You Screen ---- */
+  .thankyou {
+    max-width: 560px;
+    margin: 120px auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 56px 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+  .thankyou .check-circle {
+    width: 64px;
+    height: 64px;
+    background: #ECFDF5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 28px;
+    color: #059669;
+  }
+  .thankyou h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .thankyou p {
+    font-size: 15px;
+    color: #6B7280;
+    line-height: 1.6;
+  }
+
+  /* ---- Done State ---- */
+  .done-banner {
+    display: none;
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #065F46;
+    line-height: 1.5;
+  }
+  .done-banner strong { font-weight: 600; }
+  .done-banner.visible { display: block; }
+
+  /* ---- Empty pool state ---- */
+  .pool-empty {
+    display: none;
+    text-align: center;
+    padding: 24px 16px;
+    color: #6B7280;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .pool-empty .check-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* ---- Loading spinner ---- */
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============================================================
+     RESPONSIVE — fluid scaling
+     ============================================================ */
+  @media (max-width: 1024px) {
+    .header { padding: 20px 24px; }
+    .layout { padding: 24px 24px 100px; gap: 24px; }
+    .card-pool { width: 240px; }
+    .submit-bar { padding: 16px 24px; }
+  }
+
+  @media (max-width: 768px) {
+    .welcome { margin: 40px 16px; padding: 32px 24px; }
+    .welcome h1 { font-size: 20px; }
+
+    .header { padding: 16px 16px; }
+    .header h1 { font-size: 17px; }
+    .header p { font-size: 13px; }
+
+    .layout {
+      flex-direction: column;
+      padding: 16px 16px 100px;
+      gap: 16px;
+    }
+    .card-pool {
+      width: 100%;
+      position: relative;
+      top: auto;
+    }
+    .card { padding: 12px 14px; font-size: 13px; }
+
+    .category-header { padding: 14px 16px; }
+    .category-title { font-size: 14px; }
+    .category-drop { padding: 10px 12px; min-height: 48px; }
+
+    .submit-bar { padding: 12px 16px; }
+
+    .thankyou { margin: 60px 16px; padding: 40px 24px; }
+    .thankyou h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SCREEN 1: Welcome ==================== -->
+<div class="screen active" id="screenWelcome">
+  <div class="welcome">
+    <h1>Help us improve notification settings</h1>
+    <p>You'll see a list of email notifications. Sort them into the groups that make the most sense to you. There are no right or wrong answers — we're interested in how <strong>you</strong> think about these.</p>
+    <label for="participantName">Your name or initials</label>
+    <input type="text" id="participantName" placeholder="e.g. Sarah C." autocomplete="off">
+    <button class="btn-start" id="btnStart" disabled>Start sorting</button>
+    <div class="time-note">Takes about 5 minutes</div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 2: Card Sort ==================== -->
+<div class="screen" id="screenSort">
+  <div class="header">
+    <h1>Sort these email notifications into groups</h1>
+    <p>Drag each card into the category where you'd expect to find it. You can also create your own category if none fit.</p>
+    <div class="progress-bar">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-label" id="progressLabel">0 / 15 sorted</span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="card-pool">
+      <div class="card-pool-header">Cards to sort</div>
+      <div class="card-pool-list" id="cardPool"></div>
+      <div class="pool-empty" id="poolEmpty">
+        <span class="check-icon">&#10003;</span>
+        All cards sorted!<br>Review your groups or drag cards between categories.
+      </div>
+    </div>
+
+    <div class="categories" id="categories">
+      <div class="done-banner" id="doneBanner">
+        <strong>All cards sorted!</strong> Review your groups. You can still move cards around or add new categories before submitting.
+      </div>
+      <div class="add-category-btn" id="addCategoryBtn">+ Create your own category</div>
+    </div>
+  </div>
+
+  <div class="submit-bar" id="submitBar">
+    <p>All cards sorted — ready to submit?</p>
+    <button class="btn-submit" id="btnSubmitFinal">Submit my sorting</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 3: Thank You ==================== -->
+<div class="screen" id="screenThanks">
+  <div class="thankyou">
+    <div class="check-circle">&#10003;</div>
+    <h1>Thank you!</h1>
+    <p>Your responses will directly shape how we design notification settings. We really appreciate your time.</p>
+  </div>
+</div>
+
+<!-- ==================== Modal: New Category ==================== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>New category</h2>
+    <input type="text" id="newCategoryInput" placeholder="e.g. Getting started, Job matching...">
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modalCancel">Cancel</button>
+      <button class="btn-primary" id="modalCreate">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==================================================================
+  // CONFIG
+  // ==================================================================
+  const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyRgNAWwqNTASpDKEDnj6ZHr6KtmdZJIOBJB-5fqvZxAAvTngK-RgP_p5sCf2OSmb4MMQ/exec';
+
+  // ==================================================================
+  // DATA
+  // ==================================================================
+  const cards = [
+    'Recommended jobs based on your profile',
+    'New jobs matching your saved search',
+    'Reminder to finish your application',
+    'Your application was viewed',
+    'Application status update',
+    'Interview preparation tips',
+    'Job market insights for your field',
+    'Tips to improve your job search',
+    'Complete your profile reminder',
+    'Confirm your profile information',
+    'Welcome to HeyJobs',
+    'Company updates from HeyJobs',
+    'New features on HeyJobs',
+    'Salary insights for roles you\'ve viewed',
+    'Reminder: you haven\'t searched in a while',
+  ];
+
+  const defaultCategories = [
+    'Job recommendations',
+    'Job Alerts',
+    'Job search & application reminders',
+    'Job search tips & opportunities',
+    'Company updates',
+  ];
+
+  const totalCards = cards.length;
+  const sessionId = 'S' + Date.now().toString(36);
+  let participantName = '';
+
+  // ==================================================================
+  // SCREEN MANAGEMENT
+  // ==================================================================
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ==================================================================
+  // SCREEN 1: Welcome
+  // ==================================================================
+  const nameInput = document.getElementById('participantName');
+  const btnStart = document.getElementById('btnStart');
+
+  nameInput.addEventListener('input', () => {
+    btnStart.disabled = nameInput.value.trim().length === 0;
+  });
+
+  btnStart.addEventListener('click', () => {
+    participantName = nameInput.value.trim();
+    showScreen('screenSort');
+    initCardSort();
+  });
+
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && nameInput.value.trim()) btnStart.click();
+  });
+
+  // ==================================================================
+  // SCREEN 2: Card Sort
+  // ==================================================================
+  const cardPool = document.getElementById('cardPool');
+  const categoriesEl = document.getElementById('categories');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const poolEmpty = document.getElementById('poolEmpty');
+  const doneBanner = document.getElementById('doneBanner');
+  const addCategoryBtn = document.getElementById('addCategoryBtn');
+  const submitBar = document.getElementById('submitBar');
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function createCardEl(text) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = true;
+    card.dataset.label = text;
+    card.innerHTML = `<span class="drag-handle">&#8942;&#8942;</span>${text}`;
+
+    card.addEventListener('dragstart', (e) => {
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', text);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+    });
+
+    return card;
+  }
+
+  function createCategory(name) {
+    const cat = document.createElement('div');
+    cat.className = 'category';
+    cat.innerHTML = `
+      <div class="category-header">
+        <span class="category-title">${name} <span class="category-count">0</span></span>
+      </div>
+      <div class="category-drop" data-category="${name}">
+        <span class="placeholder">Drag cards here</span>
+      </div>
+    `;
+
+    const drop = cat.querySelector('.category-drop');
+
+    drop.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      drop.classList.add('drag-over');
+    });
+    drop.addEventListener('dragleave', () => {
+      drop.classList.remove('drag-over');
+    });
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('drag-over');
+      const label = e.dataTransfer.getData('text/plain');
+      document.querySelectorAll('.card').forEach(c => {
+        if (c.dataset.label === label) {
+          const ph = drop.querySelector('.placeholder');
+          if (ph) ph.remove();
+          drop.appendChild(c);
+        }
+      });
+      updateCounts();
+    });
+
+    categoriesEl.insertBefore(cat, doneBanner);
+  }
+
+  // Drop back to pool
+  cardPool.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+  cardPool.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const label = e.dataTransfer.getData('text/plain');
+    document.querySelectorAll('.card').forEach(c => {
+      if (c.dataset.label === label) cardPool.appendChild(c);
+    });
+    updateCounts();
+  });
+
+  function updateCounts() {
+    const drops = document.querySelectorAll('.category-drop');
+    let sorted = 0;
+    drops.forEach(drop => {
+      const count = drop.querySelectorAll('.card').length;
+      const badge = drop.closest('.category').querySelector('.category-count');
+      badge.textContent = count;
+
+      let ph = drop.querySelector('.placeholder');
+      if (count === 0 && !ph) {
+        ph = document.createElement('span');
+        ph.className = 'placeholder';
+        ph.textContent = 'Drag cards here';
+        drop.appendChild(ph);
+      } else if (count > 0 && ph) {
+        ph.remove();
+      }
+
+      sorted += count;
+    });
+
+    const pct = Math.round((sorted / totalCards) * 100);
+    progressFill.style.width = pct + '%';
+    progressLabel.textContent = `${sorted} / ${totalCards} sorted`;
+
+    const poolCards = cardPool.querySelectorAll('.card').length;
+    poolEmpty.style.display = poolCards === 0 ? 'block' : 'none';
+
+    const allDone = sorted === totalCards;
+    doneBanner.classList.toggle('visible', allDone);
+    submitBar.classList.toggle('visible', allDone);
+  }
+
+  function initCardSort() {
+    shuffle(cards).forEach(text => {
+      cardPool.appendChild(createCardEl(text));
+    });
+    defaultCategories.forEach(name => createCategory(name));
+  }
+
+  // ==================================================================
+  // Add category modal
+  // ==================================================================
+  const modalOverlay = document.getElementById('modalOverlay');
+  const newCategoryInput = document.getElementById('newCategoryInput');
+
+  addCategoryBtn.addEventListener('click', () => {
+    modalOverlay.classList.add('active');
+    newCategoryInput.value = '';
+    setTimeout(() => newCategoryInput.focus(), 100);
+  });
+
+  document.getElementById('modalCancel').addEventListener('click', () => {
+    modalOverlay.classList.remove('active');
+  });
+
+  document.getElementById('modalCreate').addEventListener('click', () => {
+    const name = newCategoryInput.value.trim();
+    if (name) {
+      createCategory(name);
+      modalOverlay.classList.remove('active');
+    }
+  });
+
+  newCategoryInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('modalCreate').click();
+    if (e.key === 'Escape') modalOverlay.classList.remove('active');
+  });
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+  });
+
+  // ==================================================================
+  // SUBMIT
+  // ==================================================================
+  document.getElementById('btnSubmitFinal').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSubmitFinal');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Submitting...';
+
+    const responses = [];
+    document.querySelectorAll('.category-drop').forEach(drop => {
+      const category = drop.dataset.category;
+      drop.querySelectorAll('.card').forEach(card => {
+        responses.push({
+          card: card.dataset.label,
+          category: category
+        });
+      });
+    });
+
+    const payload = {
+      participant: participantName,
+      sessionId: sessionId,
+      responses: responses
+    };
+
+    try {
+      await fetch(GOOGLE_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error('Submit error:', err);
+    }
+
+    showScreen('screenThanks');
+  });
+</script>
+
+</body>
+</html>
